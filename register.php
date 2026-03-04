@@ -2,6 +2,7 @@
 // Adding pagetitle, header and database connection
 $pagetitle = "Create an account";
 require_once "assets/header.php";
+require_once "assets/mailer.php";
 require_once "assets/db_connect.php";
 
 // Initializing variable
@@ -19,9 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = htmlspecialchars($_POST['password'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $confirm_password = htmlspecialchars($_POST['confirm_password'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $allergies = htmlspecialchars($_POST['allergies'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-    // Validating Picture
-
 
     // Validating firstname
     if (empty($firstname)) {
@@ -92,6 +90,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('ssssssss', $firstname, $lastname, $phone, $email, $pass, $code, $allergies, $filelocation);
 
         if ($stmt->execute()) {
+            $name = $firstname . " " . $lastname;
+            $link = "http://localhost/foodplace/verify.php?email=$email&token=$code";
+            $mail->setFrom('6bytes@nhsurulere.site', 'Food Place');
+            $mail->addAddress($email, $name);
+            $mail->isHTML(true);
+            $mail->Subject = 'Food Place Account Verification';
+            $mail->Body = "<h1>Hello $name</h1>
+            <p>Thank you for registering on our platform, below is your verification code or click the link to verify</p>
+            <h1>$code</h1>
+            <p>Please click <a href='$link'>here</a> to verify</p>
+            <h6>Warm regard <br/> Food Place Team</h6>";
+
+            $mail->AltBody = "Hello $name. Thank you for registering on our platform, this is your verification code $code or click the link to verify $link";
+
+            $mail->send();
+
             move_uploaded_file($picture['tmp_name'], $filelocation);
             $msg = "Registered Successfully";
             $picError = $fnerror = $lnerror = $pherror = $emerror = $perror = $cperror = $aerror = $msg = "";
@@ -103,8 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = "Registration Failed";
     }
 }
-
 ?>
+
 <section class="bg-gray-50 dark:bg-gray-900">
     <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:py-5">
         <a href="#" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
